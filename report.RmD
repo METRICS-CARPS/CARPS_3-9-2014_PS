@@ -1,0 +1,165 @@
+---
+title: "CARPS Reproducibility Report"
+output:
+  html_document:
+    toc: yes
+    toc_float: yes
+  pdf_document:
+    toc: yes
+---
+
+#### Article ID: CARPS_3-9-2014_PS
+#### Pilot 1: Katherine Hermann
+#### Co-pilot: Benjamin deMayo
+#### Start date: 11/4/2017
+#### End date: 11/7/2017   
+
+-------
+
+#### Methods summary: 
+This analysis pertains to Experiment 2 of de la Fuente et al. (2014). In that experiment, the researchers tested the question of whether temporal focus differs between Moroccan and Spanish cultures, hypothesizing that Moroccans are more past-focused, whereas Spaniards are more future-focused. Two groups of participants ($N = 40$ Moroccan and $N=40$ Spanish) completed a temporal-focus questionnaire that contained questions about past-focused ("PAST") and future-focused ("FUTURE") topics. In response to each question, participants provided a rating on a 5-point Likert scale on which lower scores indicated less agreement and higher scores indicated greater agreement. The authors then performed a mixed-design ANOVA with agreement score as the dependent variable, group (Moroccan or Spanish, between-subjects) as the fixed-effects factor, and temporal focus (past or future, within-subjects) as the random effects factor. In addition, the authors performed unpaired two-sample t-tests to determine whether there was a significant difference between the two groups in agreement scores for PAST questions, and whether there was a significant difference in scores for FUTURE questions.
+
+------
+
+#### Target outcomes: 
+"According to a mixed analysis of variance (ANOVA) with
+group (Spanish vs. Moroccan) as a between-subjects factor and temporal focus (past vs. future) as a within-subjects factor, temporal focus differed significantly between
+Spaniards and Moroccans, as indicated by a significant
+interaction of temporal focus and group, F(1, 78) = 19.12,
+p = .001, $\eta_{p}^{2}$ = .20 (Fig. 2). Moroccans showed greater
+agreement with past-focused statements than Spaniards
+did, t(78) = 4.04, p = .001, and Spaniards showed greater
+agreement with future-focused statements than Moroccans
+did, t(78) = -3.32, p = .001" (de la Fuente et al., 2014).
+
+------
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE, warning=FALSE, message=FALSE)
+```
+
+## Step 1: Load packages
+
+```{r}
+library(tidyverse) # for data munging
+library(knitr) # for kable table formating
+library(haven) # import and export 'SPSS', 'Stata' and 'SAS' Files
+library(readxl) # import excel files
+library(CARPSreports) # custom report functions
+library(afex) # anova functions
+```
+
+## Step 2: Load data
+
+```{r}
+data_path = 'data/DeLaFuenteEtAl_2014_RawData.xls'
+d <- read_excel(data_path, sheet=3)
+```
+
+## Step 3: Tidy data
+
+```{r}
+# rename agreement
+colnames(d)[5] <- 'agreement'
+
+# change variable formats 
+d$group <- factor(d$group)
+d$participant <- d$participant
+d$subscale <- factor(d$subscale) # "subscale" is the temporal focus
+d$item <- factor(d$item)
+d$agreement <- as.integer(d$agreement)
+
+#rename participants so that identifiers are distinct in the two groups
+moroccan_ids = d$participant[d$group=='Moroccan']
+d$participant[d$group=='young Spaniard'] = d$participant[d$group=='young Spaniard'] + tail(moroccan_ids, 1)
+d$participant <- factor(d$participant)
+
+# view
+head(d)
+```
+
+## Step 4: Run analysis
+
+### Pre-processing
+
+```{r}
+# aggregate the data at the participant level
+#   - collapse agreement scores for items within each level of subscale into a single (mean) value
+d_agg <- d %>% 
+  group_by(group, participant, subscale) %>% 
+  summarise(agreement_score = mean(agreement))
+```
+
+### Descriptive statistics
+
+```{r}
+# None reported in the target outcome.
+```
+
+### Inferential statistics
+
+```{r}
+# ANALYSIS 1: Mixed-design ANOVA with group as between-subjects variable (fixed effect) and subscale as within-subjects variable (mixed effect), with partial eta-squared's
+aov_group_subscale <- aov_car(agreement_score ~ group*subscale + Error(participant/subscale), data=d_agg, anova_table=list(es="pes"))
+summary(aov_group_subscale) # detailed print-out
+print(aov_group_subscale) # truncated output but includes partial eta-squared's
+
+compareValues(reportedValue = 78, obtainedValue = 76) # df
+compareValues(reportedValue = 19.12, obtainedValue = 18.3456) # group:subscale F
+compareValues(reportedValue = .001, obtainedValue = 0.00005328, isP = T) # group:subscale p
+compareValues(reportedValue = .20, obtainedValue = .19) # partial eta-squared
+# NOTE: why does compareValues return MATCH for the partial eta-squareds?
+
+# ANALYSIS 2: Unpaired two-sample t-tests
+# The authors don't specify whether they used one- or two-tailed tests, or which test (Student's t-test or Welch's), so I've done all four possible tests. However, I use the two-tailed Student's test as my obtained result for the purposes of comparison.
+
+# TEST A: Are scores of the two groups significantly different for subscale=PAST?
+moroccan_past <- d_agg %>% filter(subscale=='PAST', group=='Moroccan')
+spanish_past <- d_agg %>% filter(subscale=='PAST', group=='young Spaniard')
+
+t.test(moroccan_past$agreement_score, spanish_past$agreement_score, paired=FALSE, var.equal=TRUE, alternative=c("greater")) # one-tailed Student's
+t.test(moroccan_past$agreement_score, spanish_past$agreement_score, paired=FALSE, var.equal=FALSE, alternative=c("greater")) # one-tailed Welch's
+t.test(moroccan_past$agreement_score, spanish_past$agreement_score, paired=FALSE, var.equal=TRUE) # two-tailed Student's 
+t.test(moroccan_past$agreement_score, spanish_past$agreement_score, paired=FALSE, var.equal=FALSE) # two-tailed Welch's
+
+# compare reported with two-tailed Student's result
+compareValues(reportedValue = 78, obtainedValue = 76) # df
+compareValues(reportedValue = 4.04, obtainedValue = 3.8562) # t-statistic
+compareValues(reportedValue = .001, obtainedValue = .0002394, isP = T) # p
+
+# TEST B: Are scores of the two groups significantly different for subscale=FUTURE?
+moroccan_future <- d_agg %>% filter(subscale=='FUTURE', group=='Moroccan')
+spanish_future <- d_agg %>% filter(subscale=='FUTURE', group=='young Spaniard')
+
+t.test(moroccan_future$agreement_score, spanish_future$agreement_score, paired=FALSE, var.equal=TRUE, alternative=c("less")) # one-tailed Student's
+t.test(moroccan_future$agreement_score, spanish_future$agreement_score, paired=FALSE, var.equal=FALSE, alternative=c("less")) # one-tailed Welch's
+t.test(moroccan_future$agreement_score, spanish_future$agreement_score, paired=FALSE, var.equal=TRUE) # two-tailed Student's 
+t.test(moroccan_future$agreement_score, spanish_future$agreement_score, paired=FALSE, var.equal=FALSE) # two-tailed Welch's
+
+# compare reported with two-tailed Student's result
+compareValues(reportedValue = 78, obtainedValue = 76) # df
+compareValues(reportedValue = -3.32, obtainedValue = -3.2098) # t-statistic
+compareValues(reportedValue = .001, obtainedValue = .001929, isP = T) # p
+```
+
+## Step 5: Conclusion
+
+```{r}
+carpsReport(Report_Type = "pilot", 
+            Article_ID = "CARPS_3-9-2014_PS", 
+            Insufficient_Information_Errors = 0,
+            Decision_Errors = 0,
+            Major_Numerical_Errors = 3, 
+            Time_to_Complete = 240, 
+            Author_Assistance = FALSE)
+```
+
+This reproducability check was a failure: there were 3 major numerical errors and a number of minor numerical errors.
+
+The authors report that, on the mixed-design ANOVA, there is a significant interaction of temporal focus and group, with F(1, 78) = 19.12, p = .001, $\eta_{p}^{2}$ = .20. In our replication, we noted that two participants (25 and 65) had missing data for at least one level of the temporal focus variable (de la Fuente et al. make no mention of any excluded participants in their methods), and our ANOVA function automatically removed these participants. We suspect this may be the reason that our obtained degrees of freedom differed from those reported by the authors. In addition to a difference in df (minor numerical error), we observed a difference in F-statistic (minor) and p value (major).
+
+Similarly, there was a difference in obtained versus reported degrees of freedom (minor), t-statistic (minor), and p value (major) on the both t-tests. We do not have any hypotheses about the cause of the difference.
+
+```{r session_info, include=TRUE, echo=TRUE, results='markup'}
+devtools::session_info()
+```
