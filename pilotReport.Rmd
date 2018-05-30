@@ -8,11 +8,17 @@ output:
     toc: yes
 ---
 
-#### Article ID: CARPS_3-9-2014_PS
-#### Pilot 1: Katherine Hermann
-#### Co-pilot: Benjamin deMayo
-#### Start date: 11/4/2017
-#### End date: 11/7/2017   
+```{r}
+articleID <- "3-9-2014_PS" # insert the article ID code here e.g., "10-3-2015_PS"
+reportType <- 'pilot'
+pilotNames <- "Katherine Hermann, Benjamin deMayo" # insert the pilot's name here e.g., "Tom Hardwicke". If there are multiple pilots enter both names in a character string e.g., "Tom Hardwicke, Bob Dylan"
+copilotNames <- "" # insert the co-pilot's name here e.g., "Michael Frank". If there are multiple co-pilots enter both names in a character string e.g., "Tom Hardwicke, Bob Dylan"
+pilotTTC <- 240 # insert the pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
+copilotTTC <- NA # insert the co- pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
+pilotStartDate <- as.Date("11/04/17", format = "%m/%d/%y") # insert the pilot's start date in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
+copilotStartDate <- as.Date("", format = "%m/%d/%y") # insert the co-pilot's start date in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
+completionDate <- as.Date("", format = "%m/%d/%y") # copilot insert the date of final report completion (after any necessary rounds of author assistance) in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
+```
 
 -------
 
@@ -47,6 +53,11 @@ library(haven) # import and export 'SPSS', 'Stata' and 'SAS' Files
 library(readxl) # import excel files
 library(CARPSreports) # custom report functions
 library(afex) # anova functions
+```
+
+```{r}
+# Prepare report object. This will be updated automatically by the reproCheck function each time values are compared.
+reportObject <- data.frame(dummyRow = TRUE, reportedValue = NA, obtainedValue = NA, valueType = NA, percentageError = NA, comparisonOutcome = NA, eyeballCheck = NA)
 ```
 
 ## Step 2: Load data
@@ -104,11 +115,10 @@ aov_group_subscale <- aov_car(agreement_score ~ group*subscale + Error(participa
 summary(aov_group_subscale) # detailed print-out
 print(aov_group_subscale) # truncated output but includes partial eta-squared's
 
-compareValues(reportedValue = 78, obtainedValue = 76) # df
-compareValues(reportedValue = 19.12, obtainedValue = 18.3456) # group:subscale F
-compareValues(reportedValue = .001, obtainedValue = 0.00005328, isP = T) # group:subscale p
-compareValues(reportedValue = .20, obtainedValue = .19) # partial eta-squared
-# NOTE: why does compareValues return MATCH for the partial eta-squareds?
+reportObject <- reproCheck(reportedValue = "78", obtainedValue = 76, valueType = 'df')
+reportObject <- reproCheck(reportedValue = "19.12", obtainedValue = 18.3456, valueType = 'F') # group:subscale F
+reportObject <- reproCheck(reportedValue = ".001", obtainedValue = 0.00005328, valueType = 'p') # group:subscale p
+reportObject <- reproCheck(reportedValue = ".20", obtainedValue = .19, valueType = 'es') # partial eta-squared
 
 # ANALYSIS 2: Unpaired two-sample t-tests
 # The authors don't specify whether they used one- or two-tailed tests, or which test (Student's t-test or Welch's), so I've done all four possible tests. However, I use the two-tailed Student's test as my obtained result for the purposes of comparison.
@@ -123,9 +133,9 @@ t.test(moroccan_past$agreement_score, spanish_past$agreement_score, paired=FALSE
 t.test(moroccan_past$agreement_score, spanish_past$agreement_score, paired=FALSE, var.equal=FALSE) # two-tailed Welch's
 
 # compare reported with two-tailed Student's result
-compareValues(reportedValue = 78, obtainedValue = 76) # df
-compareValues(reportedValue = 4.04, obtainedValue = 3.8562) # t-statistic
-compareValues(reportedValue = .001, obtainedValue = .0002394, isP = T) # p
+reportObject <- reproCheck(reportedValue = "78", obtainedValue = 76, valueType = 'df') # df
+reportObject <- reproCheck(reportedValue = "4.04", obtainedValue = 3.8562, valueType = 't') # t-statistic
+reportObject <- reproCheck(reportedValue = ".001", obtainedValue = .0002394, valueType = 'p') # p
 
 # TEST B: Are scores of the two groups significantly different for subscale=FUTURE?
 moroccan_future <- d_agg %>% filter(subscale=='FUTURE', group=='Moroccan')
@@ -137,28 +147,71 @@ t.test(moroccan_future$agreement_score, spanish_future$agreement_score, paired=F
 t.test(moroccan_future$agreement_score, spanish_future$agreement_score, paired=FALSE, var.equal=FALSE) # two-tailed Welch's
 
 # compare reported with two-tailed Student's result
-compareValues(reportedValue = 78, obtainedValue = 76) # df
-compareValues(reportedValue = -3.32, obtainedValue = -3.2098) # t-statistic
-compareValues(reportedValue = .001, obtainedValue = .001929, isP = T) # p
+reportObject <- reproCheck(reportedValue = "78", obtainedValue = 76, valueType = 'df') # df
+reportObject <- reproCheck(reportedValue = "-3.32", obtainedValue = -3.2098, valueType = 't') # t-statistic
+reportObject <- reproCheck(reportedValue = ".001", obtainedValue = .001929, valueType = 'p') # p
 ```
 
 ## Step 5: Conclusion
 
-```{r}
-carpsReport(Report_Type = "pilot", 
-            Article_ID = "CARPS_3-9-2014_PS", 
-            Insufficient_Information_Errors = 0,
-            Decision_Errors = 0,
-            Major_Numerical_Errors = 3, 
-            Time_to_Complete = 240, 
-            Author_Assistance = FALSE)
-```
-
-This reproducability check was a failure: there were 3 major numerical errors and a number of minor numerical errors.
+This reproducability check was a failure.
 
 The authors report that, on the mixed-design ANOVA, there is a significant interaction of temporal focus and group, with F(1, 78) = 19.12, p = .001, $\eta_{p}^{2}$ = .20. In our replication, we noted that two participants (25 and 65) had missing data for at least one level of the temporal focus variable (de la Fuente et al. make no mention of any excluded participants in their methods), and our ANOVA function automatically removed these participants. We suspect this may be the reason that our obtained degrees of freedom differed from those reported by the authors. In addition to a difference in df (minor numerical error), we observed a difference in F-statistic (minor) and p value (major).
 
 Similarly, there was a difference in obtained versus reported degrees of freedom (minor), t-statistic (minor), and p value (major) on the both t-tests. We do not have any hypotheses about the cause of the difference.
+
+```{r}
+Author_Assistance = FALSE # was author assistance provided? (if so, enter TRUE)
+
+Insufficient_Information_Errors <- 0 # how many discrete insufficient information issues did you encounter?
+
+# Assess the causal locus (discrete reproducibility issues) of any reproducibility errors. Note that there doesn't necessarily have to be a one-to-one correspondance between discrete reproducibility issues and reproducibility errors. For example, it could be that the original article neglects to mention that a Greenhouse-Geisser correct was applied to ANOVA outcomes. This might result in multiple reproducibility errors, but there is a single causal locus (discrete reproducibility issue).
+
+locus_typo <- NA # how many discrete issues did you encounter that related to typographical errors?
+locus_specification <- NA # how many discrete issues did you encounter that related to incomplete, incorrect, or unclear specification of the original analyses?
+locus_analysis <- NA # how many discrete issues did you encounter that related to errors in the authors' original analyses?
+locus_data <- NA # how many discrete issues did you encounter that related to errors in the data files shared by the authors?
+locus_unidentified <- NA # how many discrete issues were there for which you could not identify the cause
+
+Affects_Conclusion <- NA # Do any reproducibility issues encounter appear to affect the conclusions made in the original article? This is a subjective judgement, but you should taking into account multiple factors, such as the presence/absence of decision errors, the number of target outcomes that could not be reproduced, the type of outcomes that could or could not be reproduced, the difference in magnitude of effect sizes, and the predictions of the specific hypothesis under scrutiny.
+```
+
+```{r}
+reportObject <- reportObject %>%
+  filter(dummyRow == FALSE) %>% # remove the dummy row
+  select(-dummyRow) %>% # remove dummy row designation
+  mutate(articleID = articleID) %>% # add the articleID 
+  select(articleID, everything()) # make articleID first column
+
+# decide on final outcome
+if(any(reportObject$comparisonOutcome != "MATCH") | Insufficient_Information_Errors > 0){
+  finalOutcome <- "Failure without author assistance"
+  if(Author_Assistance == T){
+    finalOutcome <- "Failure despite author assistance"
+  }
+}else{
+  finalOutcome <- "Success without author assistance"
+  if(Author_Assistance == T){
+    finalOutcome <- "Success with author assistance"
+  }
+}
+
+# collate report extra details
+reportExtras <- data.frame(articleID, pilotNames, copilotNames, pilotTTC, copilotTTC, pilotStartDate, copilotStartDate, completionDate, Author_Assistance, finalOutcome, Insufficient_Information_Errors, locus_typo, locus_specification, locus_analysis, locus_data, locus_unidentified)
+
+# save report objects
+if(reportType == "pilot"){
+  write_csv(reportObject, "pilotReportDetailed.csv")
+  write_csv(reportExtras, "pilotReportExtras.csv")
+}
+
+if(reportType == "final"){
+  write_csv(reportObject, "finalReportDetailed.csv")
+  write_csv(reportExtras, "finalReportExtras.csv")
+}
+```
+
+# Session information
 
 ```{r session_info, include=TRUE, echo=TRUE, results='markup'}
 devtools::session_info()
