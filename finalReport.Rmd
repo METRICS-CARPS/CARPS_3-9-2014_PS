@@ -28,15 +28,7 @@ This analysis pertains to Experiment 2 of de la Fuente et al. (2014). In that ex
 ------
 
 #### Target outcomes: 
-"According to a mixed analysis of variance (ANOVA) with
-group (Spanish vs. Moroccan) as a between-subjects factor and temporal focus (past vs. future) as a within-subjects factor, temporal focus differed significantly between
-Spaniards and Moroccans, as indicated by a significant
-interaction of temporal focus and group, F(1, 78) = 19.12,
-p = .001, $\eta_{p}^{2}$ = .20 (Fig. 2). Moroccans showed greater
-agreement with past-focused statements than Spaniards
-did, t(78) = 4.04, p = .001, and Spaniards showed greater
-agreement with future-focused statements than Moroccans
-did, t(78) = -3.32, p = .001" (de la Fuente et al., 2014).
+> According to a mixed analysis of variance (ANOVA) with group (Spanish vs. Moroccan) as a between-subjects factor and temporal focus (past vs. future) as a within-subjectS factor, temporal focus differed significantly between Spaniards and Moroccans, as indicated by a significant interaction of temporal focus and group, F(1, 78) = 19.12, p = .001, ηp2 = .20 (Fig. 2). Moroccans showed greater agreement with past-focused statements than Spaniards did, t(78) = 4.04, p = .001, and Spaniards showed greater agreement with future-focused statements than Moroccans did, t(78) = −3.32, p = .001. (de la Fuente et al., 2014, p. 1685).
 
 ------
 
@@ -110,7 +102,7 @@ d_agg <- d %>%
 
 ### Inferential statistics
 
-According to a mixed analysis of variance (ANOVA) with group (Spanish vs. Moroccan) as a between-subjects factor and temporal focus (past vs. future) as a within-subjects factor, temporal focus differed significantly between Spaniards and Moroccans, as indicated by a significant interaction of temporal focus and group, F(1, 78) = 19.12, p = .001, ηp2 = .20 (Fig. 2). Moroccans showed greater agreement with past-focused statements than Spaniards did, t(78) = 4.04, p = .001, and Spaniards showed greater agreement with future-focused statements than Moroccans did, t(78) = −3.32, p = .001.
+>According to a mixed analysis of variance (ANOVA) with group (Spanish vs. Moroccan) as a between-subjects factor and temporal focus (past vs. future) as a within-subjects factor, temporal focus differed significantly between Spaniards and Moroccans, as indicated by a significant interaction of temporal focus and group, F(1, 78) = 19.12, p = .001, ηp2 = .20 (Fig. 2). Moroccans showed greater agreement with past-focused statements than Spaniards did, t(78) = 4.04, p = .001, and Spaniards showed greater agreement with future-focused statements than Moroccans did, t(78) = −3.32, p = .001.(de la Fuente et al., 2014, p. 1685)
 
 ```{r}
 # ANALYSIS 1: Mixed-design ANOVA with group as between-subjects variable (fixed effect) and subscale as within-subjects variable (random effect), with partial eta-squared's
@@ -174,7 +166,7 @@ This reproducability check was a failure.
 
 The authors report that, on the mixed-design ANOVA, there is a significant interaction of temporal focus and group, with F(1, 78) = 19.12, p = .001, $\eta_{p}^{2}$ = .20. In our replication, we noted that two participants (25 and 65) had missing data for at least one level of the temporal focus variable (de la Fuente et al. make no mention of any excluded participants in their methods), and our ANOVA function automatically removed these participants. We suspect this may be the reason that our obtained degrees of freedom differed from those reported by the authors. In addition to a difference in df (minor numerical error), we observed a difference in F-statistic (minor) and p value (major).
 
-Similarly, there was a difference in obtained versus reported degrees of freedom (minor), t-statistic (minor), and p value (major) on the both t-tests. We do not have any hypotheses about the cause of the difference.
+Similarly, there was a difference in obtained versus reported degrees of freedom (minor), t-statistic (minor), and p value (major) on the t-test for the Past subscale, and in obtained versus reported t-statistic (minor), and p value (major) on the t-test for the Future subscale. We do not have any hypotheses about the cause of the difference in t-statistics or degrees of freedom. One possibility is that the p values were off because the authors reported that p = .001 when they meant to report that p < .001.
 
 ```{r}
 Author_Assistance = FALSE # was author assistance provided? (if so, enter TRUE)
@@ -189,7 +181,7 @@ locus_analysis <- NA # how many discrete issues did you encounter that related t
 locus_data <- NA # how many discrete issues did you encounter that related to errors in the data files shared by the authors?
 locus_unidentified <- NA # how many discrete issues were there for which you could not identify the cause
 
-Affects_Conclusion <- NA # Do any reproducibility issues encounter appear to affect the conclusions made in the original article? This is a subjective judgement, but you should taking into account multiple factors, such as the presence/absence of decision errors, the number of target outcomes that could not be reproduced, the type of outcomes that could or could not be reproduced, the difference in magnitude of effect sizes, and the predictions of the specific hypothesis under scrutiny.
+Affects_Conclusion <- FALSE # Do any reproducibility issues encounter appear to affect the conclusions made in the original article? This is a subjective judgement, but you should taking into account multiple factors, such as the presence/absence of decision errors, the number of target outcomes that could not be reproduced, the type of outcomes that could or could not be reproduced, the difference in magnitude of effect sizes, and the predictions of the specific hypothesis under scrutiny.
 ```
 
 ```{r}
