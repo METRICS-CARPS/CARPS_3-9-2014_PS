@@ -10,11 +10,11 @@ output:
 
 ```{r}
 articleID <- "3-9-2014_PS" # insert the article ID code here e.g., "10-3-2015_PS"
-reportType <- 'pilot'
+reportType <- 'final'
 pilotNames <- "Katherine Hermann, Benjamin deMayo" # insert the pilot's name here e.g., "Tom Hardwicke". If there are multiple pilots enter both names in a character string e.g., "Tom Hardwicke, Bob Dylan"
 copilotNames <- "Emily Hembacher" # insert the co-pilot's name here e.g., "Michael Frank". If there are multiple co-pilots enter both names in a character string e.g., "Tom Hardwicke, Bob Dylan"
 pilotTTC <- 240 # insert the pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
-copilotTTC <- NA # insert the co- pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
+copilotTTC <- 180 # insert the co- pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
 pilotStartDate <- as.Date("11/04/17", format = "%m/%d/%y") # insert the pilot's start date in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
 copilotStartDate <- as.Date("06/13/18", format = "%m/%d/%y") # insert the co-pilot's start date in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
 completionDate <- as.Date("", format = "%m/%d/%y") # copilot insert the date of final report completion (after any necessary rounds of author assistance) in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
@@ -28,6 +28,7 @@ This analysis pertains to Experiment 2 of de la Fuente et al. (2014). In that ex
 ------
 
 #### Target outcomes: 
+
 > According to a mixed analysis of variance (ANOVA) with group (Spanish vs. Moroccan) as a between-subjects factor and temporal focus (past vs. future) as a within-subjectS factor, temporal focus differed significantly between Spaniards and Moroccans, as indicated by a significant interaction of temporal focus and group, F(1, 78) = 19.12, p = .001, ηp2 = .20 (Fig. 2). Moroccans showed greater agreement with past-focused statements than Spaniards did, t(78) = 4.04, p = .001, and Spaniards showed greater agreement with future-focused statements than Moroccans did, t(78) = −3.32, p = .001. (de la Fuente et al., 2014, p. 1685).
 
 ------
@@ -45,7 +46,9 @@ library(haven) # import and export 'SPSS', 'Stata' and 'SAS' Files
 library(readxl) # import excel files
 library(CARPSreports) # custom report functions
 library(afex) # anova functions
-library(ez)
+library(ez) # anova functions 2
+library(scales) # for plotting
+std.err <- function(x) sd(x)/sqrt(length(x)) # standard error
 ```
 
 ```{r}
@@ -56,7 +59,7 @@ reportObject <- data.frame(dummyRow = TRUE, reportedValue = NA, obtainedValue = 
 ## Step 2: Load data
 
 ```{r}
-data_path = 'data/DeLaFuenteEtAl_2014_RawData.xls'
+data_path <- 'data/DeLaFuenteEtAl_2014_RawData.xls'
 d <- read_excel(data_path, sheet=3)
 ```
 
@@ -96,22 +99,62 @@ d_agg <- d %>%
 
 ### Descriptive statistics
 
+Try to recreate Figure 2:
+
+![Figure 2](img/fig2.png)
+
 ```{r}
-# None reported in the target outcome.
+descript <- d_agg %>% 
+  ungroup() %>%
+  mutate(group = factor(group, levels = c("young Spaniard", "Moroccan")),
+         subscale = factor(subscale, levels = c("PAST", "FUTURE"))) %>%
+  group_by(group, subscale) %>% 
+  summarise(mean_rating = mean(agreement_score), se = std.err(agreement_score)) 
+
+descript %>%
+  ggplot(aes(x = group, y = mean_rating, ymin = mean_rating - se, ymax = mean_rating + se, fill = subscale, group = subscale)) +
+  theme_minimal() +
+  geom_bar(position=position_dodge(), stat="identity") +
+  geom_errorbar(position = position_dodge()) +
+  scale_y_continuous(limits=c(2,4), oob = rescale_none)
 ```
+
+Looks at least approximately correct.
+
+```{r}
+reportObject <- reproCheck(reportedValue = "figure", obtainedValue = filter(descript, group == "young Spaniard", subscale == "PAST") %>% pull(mean_rating), valueType = 'mean', eyeballCheck = TRUE)
+
+reportObject <- reproCheck(reportedValue = "figure", obtainedValue = filter(descript, group == "young Spaniard", subscale == "PAST") %>% pull(mean_rating), valueType = 'se', eyeballCheck = TRUE)
+
+reportObject <- reproCheck(reportedValue = "figure", obtainedValue = filter(descript, group == "young Spaniard", subscale == "FUTURE") %>% pull(mean_rating), valueType = 'mean', eyeballCheck = TRUE)
+
+reportObject <- reproCheck(reportedValue = "figure", obtainedValue = filter(descript, group == "young Spaniard", subscale == "FUTURE") %>% pull(mean_rating), valueType = 'se', eyeballCheck = TRUE)
+
+reportObject <- reproCheck(reportedValue = "figure", obtainedValue = filter(descript, group == "Moroccan", subscale == "PAST") %>% pull(mean_rating), valueType = 'mean', eyeballCheck = TRUE)
+
+reportObject <- reproCheck(reportedValue = "figure", obtainedValue = filter(descript, group == "Moroccan", subscale == "PAST") %>% pull(mean_rating), valueType = 'se', eyeballCheck = TRUE)
+
+reportObject <- reproCheck(reportedValue = "figure", obtainedValue = filter(descript, group == "Moroccan", subscale == "FUTURE") %>% pull(mean_rating), valueType = 'mean', eyeballCheck = TRUE)
+
+reportObject <- reproCheck(reportedValue = "figure", obtainedValue = filter(descript, group == "Moroccan", subscale == "FUTURE") %>% pull(mean_rating), valueType = 'se', eyeballCheck = TRUE)
+```
+
 
 ### Inferential statistics
 
 In this section we will check the reproducibility of the results of Experiment 2, described as follows:
 
->According to a mixed analysis of variance (ANOVA) with group (Spanish vs. Moroccan) as a between-subjects factor and temporal focus (past vs. future) as a within-subjects factor, temporal focus differed significantly between Spaniards and Moroccans, as indicated by a significant interaction of temporal focus and group, F(1, 78) = 19.12, p = .001, ηp2 = .20 (Fig. 2). Moroccans showed greater agreement with past-focused statements than Spaniards did, t(78) = 4.04, p = .001, and Spaniards showed greater agreement with future-focused statements than Moroccans did, t(78) = −3.32, p = .001.(de la Fuente et al., 2014, p. 1685)
+> According to a mixed analysis of variance (ANOVA) with group (Spanish vs. Moroccan) as a between-subjects factor and temporal focus (past vs. future) as a within-subjects factor, temporal focus differed significantly between Spaniards and Moroccans, as indicated by a significant interaction of temporal focus and group, F(1, 78) = 19.12, p = .001, ηp2 = .20 (Fig. 2).
 
 ```{r}
 # ANALYSIS 1: Mixed-design ANOVA with group as between-subjects variable (fixed effect) and subscale as within-subjects variable (random effect), with partial eta-squared's
-aov_group_subscale <- aov_car(agreement_score ~ group*subscale + Error(participant/subscale), data=d_agg, anova_table=list(es="pes"))
+aov_group_subscale <- aov_car(agreement_score ~ group*subscale + Error(participant/subscale), data=d_agg, anova_table=list(es="pes"), type = "III")
 summary(aov_group_subscale) # detailed print-out
 print(aov_group_subscale) # truncated output but includes partial eta-squared's
+```
 
+
+```{r}
 df_group_subscale <- aov_group_subscale$anova_table$`den Df`[3]
 F_group_subscale <- aov_group_subscale$anova_table$F[3]
 p_group_subscale <- aov_group_subscale$anova_table$`Pr(>F)`[3]
@@ -121,18 +164,17 @@ reportObject <- reproCheck(reportedValue = "78", obtainedValue = df_group_subsca
 reportObject <- reproCheck(reportedValue = "19.12", obtainedValue = F_group_subscale, valueType = 'F') # group:subscale F
 reportObject <- reproCheck(reportedValue = ".001", obtainedValue = p_group_subscale, valueType = 'p') # group:subscale p
 reportObject <- reproCheck(reportedValue = ".20", obtainedValue = pes_group_subscale, valueType = 'pes') # partial eta-squared
+```
 
-# ANALYSIS 2: Unpaired two-sample t-tests
-# The authors don't specify whether they used one- or two-tailed tests, or which test (Student's t-test or Welch's), so I've done all four possible tests. However, I use the two-tailed Student's test as my obtained result for the purposes of comparison.
+The degrees of freedom are off by 2. Two participants (25 and 65) are being excluded from our analysis because they have missing data for the PAST condition.
 
-# TEST A: Are scores of the two groups significantly different for subscale=PAST?
+> Moroccans showed greater agreement with past-focused statements than Spaniards did, t(78) = 4.04, p = .001, 
+
+```{r}
 moroccan_past <- d_agg %>% filter(subscale=='PAST', group=='Moroccan')
 spanish_past <- d_agg %>% filter(subscale=='PAST', group=='young Spaniard')
 
-t.test(moroccan_past$agreement_score, spanish_past$agreement_score, paired=FALSE, var.equal=TRUE, alternative=c("greater")) # one-tailed Student's
-t.test(moroccan_past$agreement_score, spanish_past$agreement_score, paired=FALSE, var.equal=FALSE, alternative=c("greater")) # one-tailed Welch's
 t_past <- t.test(moroccan_past$agreement_score, spanish_past$agreement_score, paired=FALSE, var.equal=TRUE) # two-tailed Student's 
-t.test(moroccan_past$agreement_score, spanish_past$agreement_score, paired=FALSE, var.equal=FALSE) # two-tailed Welch's
 
 df_ttest_past <- unname(t_past$parameter)
 t_ttest_past <- unname(t_past$statistic)
@@ -142,15 +184,15 @@ p_ttest_past <- unname(t_past$p.value)
 reportObject <- reproCheck(reportedValue = "78", obtainedValue = df_ttest_past, valueType = 'df') # df
 reportObject <- reproCheck(reportedValue = "4.04", obtainedValue = t_ttest_past, valueType = 't') # t-statistic
 reportObject <- reproCheck(reportedValue = ".001", obtainedValue = p_ttest_past, valueType = 'p') # p
+```
 
-# TEST B: Are scores of the two groups significantly different for subscale=FUTURE?
+> and Spaniards showed greater agreement with future-focused statements than Moroccans did, t(78) = −3.32, p = .001.(de la Fuente et al., 2014, p. 1685)
+
+```{r}
 moroccan_future <- d_agg %>% filter(subscale=='FUTURE', group=='Moroccan')
 spanish_future <- d_agg %>% filter(subscale=='FUTURE', group=='young Spaniard')
 
-t.test(moroccan_future$agreement_score, spanish_future$agreement_score, paired=FALSE, var.equal=TRUE, alternative=c("less")) # one-tailed Student's
-t.test(moroccan_future$agreement_score, spanish_future$agreement_score, paired=FALSE, var.equal=FALSE, alternative=c("less")) # one-tailed Welch's
 t_future <- t.test(moroccan_future$agreement_score, spanish_future$agreement_score, paired=FALSE, var.equal=TRUE) # two-tailed Student's 
-t.test(moroccan_future$agreement_score, spanish_future$agreement_score, paired=FALSE, var.equal=FALSE) # two-tailed Welch's
 
 df_ttest_future <- unname(t_future$parameter)
 t_ttest_future <- unname(t_future$statistic)
@@ -164,11 +206,11 @@ reportObject <- reproCheck(reportedValue = ".001", obtainedValue = p_ttest_futur
 
 ## Step 5: Conclusion
 
-This reproducability check was a failure.
+We could not reproduce some reported values.
 
-The authors report that, on the mixed-design ANOVA, there is a significant interaction of temporal focus and group, with F(1, 78) = 19.12, p = .001, $\eta_{p}^{2}$ = .20. In our replication, we noted that two participants (25 and 65) had missing data for at least one level of the temporal focus variable (de la Fuente et al. make no mention of any excluded participants in their methods), and our ANOVA function automatically removed these participants. We suspect this may be the reason that our obtained degrees of freedom differed from those reported by the authors. In addition to a difference in df (minor numerical error), we observed a difference in F-statistic (minor) and p value (major).
+For the ANOVA, we noted that two participants (25 and 65) had missing data for the PAST condition. There is no mention of missing data or participant exclusions in the article. The degrees of freedom reported in the paper appear to reflect that the participants *were* included in this analysis - but that should not be possible because of the missing data. There is a similar degrees of freedom for the t-test comparing PAST conditions.
 
-Similarly, there was a difference in obtained versus reported degrees of freedom (minor), t-statistic (minor), and p value (major) on the t-test for the Past subscale, and in obtained versus reported t-statistic (minor), and p value (major) on the t-test for the Future subscale. We do not have any hypotheses about the cause of the difference in t-statistics or degrees of freedom. One possibility is that the p values were off because the authors reported that p = .001 when they meant to report that p < .001.
+There were two major errors with p-values where the authors reported that p = .001 but perhaps meant to report that p < .001.
 
 ```{r}
 Author_Assistance = FALSE # was author assistance provided? (if so, enter TRUE)
