@@ -53,6 +53,7 @@ library(haven) # import and export 'SPSS', 'Stata' and 'SAS' Files
 library(readxl) # import excel files
 library(CARPSreports) # custom report functions
 library(afex) # anova functions
+library(ez)
 ```
 
 ```{r}
@@ -109,16 +110,23 @@ d_agg <- d %>%
 
 ### Inferential statistics
 
+According to a mixed analysis of variance (ANOVA) with group (Spanish vs. Moroccan) as a between-subjects factor and temporal focus (past vs. future) as a within-subjects factor, temporal focus differed significantly between Spaniards and Moroccans, as indicated by a significant interaction of temporal focus and group, F(1, 78) = 19.12, p = .001, ηp2 = .20 (Fig. 2). Moroccans showed greater agreement with past-focused statements than Spaniards did, t(78) = 4.04, p = .001, and Spaniards showed greater agreement with future-focused statements than Moroccans did, t(78) = −3.32, p = .001.
+
 ```{r}
-# ANALYSIS 1: Mixed-design ANOVA with group as between-subjects variable (fixed effect) and subscale as within-subjects variable (mixed effect), with partial eta-squared's
+# ANALYSIS 1: Mixed-design ANOVA with group as between-subjects variable (fixed effect) and subscale as within-subjects variable (random effect), with partial eta-squared's
 aov_group_subscale <- aov_car(agreement_score ~ group*subscale + Error(participant/subscale), data=d_agg, anova_table=list(es="pes"))
 summary(aov_group_subscale) # detailed print-out
 print(aov_group_subscale) # truncated output but includes partial eta-squared's
 
-reportObject <- reproCheck(reportedValue = "78", obtainedValue = 76, valueType = 'df')
-reportObject <- reproCheck(reportedValue = "19.12", obtainedValue = 18.3456, valueType = 'F') # group:subscale F
-reportObject <- reproCheck(reportedValue = ".001", obtainedValue = 0.00005328, valueType = 'p') # group:subscale p
-reportObject <- reproCheck(reportedValue = ".20", obtainedValue = .19, valueType = 'es') # partial eta-squared
+df_group_subscale <- aov_group_subscale$anova_table$`den Df`[3]
+F_group_subscale <- aov_group_subscale$anova_table$F[3]
+p_group_subscale <- aov_group_subscale$anova_table$`Pr(>F)`[3]
+pes_group_subscale <- aov_group_subscale$anova_table$pes[3]
+
+reportObject <- reproCheck(reportedValue = "78", obtainedValue = df_group_subscale, valueType = 'df')
+reportObject <- reproCheck(reportedValue = "19.12", obtainedValue = F_group_subscale, valueType = 'F') # group:subscale F
+reportObject <- reproCheck(reportedValue = ".001", obtainedValue = p_group_subscale, valueType = 'p') # group:subscale p
+reportObject <- reproCheck(reportedValue = ".20", obtainedValue = pes_group_subscale, valueType = 'pes') # partial eta-squared
 
 # ANALYSIS 2: Unpaired two-sample t-tests
 # The authors don't specify whether they used one- or two-tailed tests, or which test (Student's t-test or Welch's), so I've done all four possible tests. However, I use the two-tailed Student's test as my obtained result for the purposes of comparison.
@@ -129,13 +137,17 @@ spanish_past <- d_agg %>% filter(subscale=='PAST', group=='young Spaniard')
 
 t.test(moroccan_past$agreement_score, spanish_past$agreement_score, paired=FALSE, var.equal=TRUE, alternative=c("greater")) # one-tailed Student's
 t.test(moroccan_past$agreement_score, spanish_past$agreement_score, paired=FALSE, var.equal=FALSE, alternative=c("greater")) # one-tailed Welch's
-t.test(moroccan_past$agreement_score, spanish_past$agreement_score, paired=FALSE, var.equal=TRUE) # two-tailed Student's 
+t_past <- t.test(moroccan_past$agreement_score, spanish_past$agreement_score, paired=FALSE, var.equal=TRUE) # two-tailed Student's 
 t.test(moroccan_past$agreement_score, spanish_past$agreement_score, paired=FALSE, var.equal=FALSE) # two-tailed Welch's
 
+df_ttest_past <- unname(t_past$parameter)
+t_ttest_past <- unname(t_past$statistic)
+p_ttest_past <- unname(t_past$p.value)
+
 # compare reported with two-tailed Student's result
-reportObject <- reproCheck(reportedValue = "78", obtainedValue = 76, valueType = 'df') # df
-reportObject <- reproCheck(reportedValue = "4.04", obtainedValue = 3.8562, valueType = 't') # t-statistic
-reportObject <- reproCheck(reportedValue = ".001", obtainedValue = .0002394, valueType = 'p') # p
+reportObject <- reproCheck(reportedValue = "78", obtainedValue = df_ttest_past, valueType = 'df') # df
+reportObject <- reproCheck(reportedValue = "4.04", obtainedValue = t_ttest_past, valueType = 't') # t-statistic
+reportObject <- reproCheck(reportedValue = ".001", obtainedValue = p_ttest_past, valueType = 'p') # p
 
 # TEST B: Are scores of the two groups significantly different for subscale=FUTURE?
 moroccan_future <- d_agg %>% filter(subscale=='FUTURE', group=='Moroccan')
@@ -143,13 +155,17 @@ spanish_future <- d_agg %>% filter(subscale=='FUTURE', group=='young Spaniard')
 
 t.test(moroccan_future$agreement_score, spanish_future$agreement_score, paired=FALSE, var.equal=TRUE, alternative=c("less")) # one-tailed Student's
 t.test(moroccan_future$agreement_score, spanish_future$agreement_score, paired=FALSE, var.equal=FALSE, alternative=c("less")) # one-tailed Welch's
-t.test(moroccan_future$agreement_score, spanish_future$agreement_score, paired=FALSE, var.equal=TRUE) # two-tailed Student's 
+t_future <- t.test(moroccan_future$agreement_score, spanish_future$agreement_score, paired=FALSE, var.equal=TRUE) # two-tailed Student's 
 t.test(moroccan_future$agreement_score, spanish_future$agreement_score, paired=FALSE, var.equal=FALSE) # two-tailed Welch's
 
+df_ttest_future <- unname(t_future$parameter)
+t_ttest_future <- unname(t_future$statistic)
+p_ttest_future <- unname(t_future$p.value)
+
 # compare reported with two-tailed Student's result
-reportObject <- reproCheck(reportedValue = "78", obtainedValue = 76, valueType = 'df') # df
-reportObject <- reproCheck(reportedValue = "-3.32", obtainedValue = -3.2098, valueType = 't') # t-statistic
-reportObject <- reproCheck(reportedValue = ".001", obtainedValue = .001929, valueType = 'p') # p
+reportObject <- reproCheck(reportedValue = "78", obtainedValue = df_ttest_future, valueType = 'df') # df
+reportObject <- reproCheck(reportedValue = "-3.32", obtainedValue = t_ttest_future, valueType = 't') # t-statistic
+reportObject <- reproCheck(reportedValue = ".001", obtainedValue = p_ttest_future, valueType = 'p') # p
 ```
 
 ## Step 5: Conclusion
