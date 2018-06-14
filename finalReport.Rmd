@@ -14,10 +14,10 @@ reportType <- 'final'
 pilotNames <- "Katherine Hermann, Benjamin deMayo" # insert the pilot's name here e.g., "Tom Hardwicke". If there are multiple pilots enter both names in a character string e.g., "Tom Hardwicke, Bob Dylan"
 copilotNames <- "Emily Hembacher" # insert the co-pilot's name here e.g., "Michael Frank". If there are multiple co-pilots enter both names in a character string e.g., "Tom Hardwicke, Bob Dylan"
 pilotTTC <- 240 # insert the pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
-copilotTTC <- 180 # insert the co- pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
+copilotTTC <- 240 # insert the co- pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
 pilotStartDate <- as.Date("11/04/17", format = "%m/%d/%y") # insert the pilot's start date in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
 copilotStartDate <- as.Date("06/13/18", format = "%m/%d/%y") # insert the co-pilot's start date in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
-completionDate <- as.Date("", format = "%m/%d/%y") # copilot insert the date of final report completion (after any necessary rounds of author assistance) in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
+completionDate <- as.Date("06/14/18", format = "%m/%d/%y") # copilot insert the date of final report completion (after any necessary rounds of author assistance) in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
 ```
 
 -------
@@ -37,7 +37,7 @@ This analysis pertains to Experiment 2 of de la Fuente et al. (2014). In that ex
 knitr::opts_chunk$set(echo=TRUE, warning=FALSE, message=FALSE)
 ```
 
-## Step 1: Load packages
+# Step 1: Load packages
 
 ```{r}
 library(tidyverse) # for data munging
@@ -56,9 +56,9 @@ std.err <- function(x) sd(x)/sqrt(length(x)) # standard error
 reportObject <- data.frame(dummyRow = TRUE, reportedValue = NA, obtainedValue = NA, valueType = NA, percentageError = NA, comparisonOutcome = NA, eyeballCheck = NA)
 ```
 
-## Step 2: Load data
+# Step 2: Load data
 
-The data posted on OSF had two typos in the "participant" column, which apparently were not present in the data used to conduct analyses for the paper. Due to these typos, it appeared that 2 participants were missing data for one of the levels of the comparison variable, and were thus dropped from the ANOVA and t-tests that we originally conducted. Once we fixed this problem, the degrees of freedom reported in the paper matched our analyses. 
+Initially we encountered problems reproducing some degrees of freedom values. After contacting the original authors, it appeared that the original data posted on OSF had two typos in the "participant" column, which apparently were not present in the data used to conduct analyses for the paper. Due to these typos, it appeared that 2 participants were missing data for one of the levels of the comparison variable, and were thus dropped from the ANOVA and t-tests that we originally conducted. Once we fixed this problem, the degrees of freedom reported in the paper matched our analyses. Below you can see that rather than loading the original data file, we are loading a file that has the participant typos corrected.
 
 ```{r}
 #data_path <- 'data/DeLaFuenteEtAl_2014_RawData.xls'
@@ -69,7 +69,7 @@ data_path <- 'data/DeLaFuenteEtAl_2014_RawData-OSF-corrected_EHedit.xls'
 d <- read_excel(data_path, sheet=3)
 ```
 
-## Step 3: Tidy data
+# Step 3: Tidy data
 
 ```{r}
 # rename agreement
@@ -91,9 +91,9 @@ d$participant <- factor(d$participant)
 head(d)
 ```
 
-## Step 4: Run analysis
+# Step 4: Run analysis
 
-### Pre-processing
+## Pre-processing
 
 ```{r}
 # aggregate the data at the participant level
@@ -103,7 +103,7 @@ d_agg <- d %>%
   summarise(agreement_score = mean(agreement))
 ```
 
-### Descriptive statistics
+## Descriptive statistics
 
 Try to recreate Figure 2:
 
@@ -146,7 +146,7 @@ reportObject <- reproCheck(reportedValue = "figure", obtainedValue = filter(desc
 ```
 
 
-### Inferential statistics
+## Inferential statistics
 
 In this section we will check the reproducibility of the results of Experiment 2, described as follows:
 
@@ -159,7 +159,6 @@ summary(aov_group_subscale) # detailed print-out
 print(aov_group_subscale) # truncated output but includes partial eta-squared's
 ```
 
-
 ```{r}
 df_group_subscale <- aov_group_subscale$anova_table$`den Df`[3]
 F_group_subscale <- aov_group_subscale$anova_table$F[3]
@@ -171,6 +170,7 @@ reportObject <- reproCheck(reportedValue = "19.12", obtainedValue = F_group_subs
 reportObject <- reproCheck(reportedValue = ".001", obtainedValue = p_group_subscale, valueType = 'p') # group:subscale p
 reportObject <- reproCheck(reportedValue = ".20", obtainedValue = pes_group_subscale, valueType = 'pes') # partial eta-squared
 ```
+There is a major error for the p-value here - it does not equal .001 as reported in the article, but is actually lower.
 
 > Moroccans showed greater agreement with past-focused statements than Spaniards did, t(78) = 4.04, p = .001, 
 
@@ -190,6 +190,8 @@ reportObject <- reproCheck(reportedValue = "4.04", obtainedValue = t_ttest_past,
 reportObject <- reproCheck(reportedValue = ".001", obtainedValue = p_ttest_past, valueType = 'p') # p
 ```
 
+There is another major error for a p-value here - it does not equal .001 as reported in the article, but is actually lower.
+
 > and Spaniards showed greater agreement with future-focused statements than Moroccans did, t(78) = −3.32, p = .001.(de la Fuente et al., 2014, p. 1685)
 
 ```{r}
@@ -208,13 +210,19 @@ reportObject <- reproCheck(reportedValue = "-3.32", obtainedValue = t_ttest_futu
 reportObject <- reproCheck(reportedValue = ".001", obtainedValue = p_ttest_future, valueType = 'p') # p
 ```
 
-## Step 5: Conclusion
+# Step 5: Conclusion
 
 We could not reproduce some reported values.
 
-On the first pass, for the ANOVA, we noted that two participants (participant 25 for both the Moroccan and Spaniard samples) had missing data for the PAST condition. The degrees of freedom reported in the paper appeared to reflect that the participants *were* included in this analysis. When we followed up with the authors, they clarified that there were typos in the data file they had posted on OSF. The wrong participant ID had been added for some lines of data, making it appear that two participants were missing data. Once we corrected the typo, the degrees of freedom in our analyses matched those in the paper. 
+On the first pass, for the ANOVA, we noted that two participants (participant 25 for both the Moroccan and Spaniard samples) had missing data for the PAST condition. The degrees of freedom reported in the paper appeared to reflect that the participants *were* included in this analysis. When we followed up with the authors, they clarified that there were typos in the data file they had posted on OSF. The wrong participant ID had been added for some lines of data, making it appear that two participants were missing data. Once we corrected the typos, the degrees of freedom in our analyses matched those in the paper. 
 
-There were two major errors with p-values where the authors reported that p = .001, but the true rounded values of p were 0.00. The authors noted that it is their policy to round up to p = .001 when p values are less than .001. 
+Two major errors with p-values remained. The authors reported that p = .001, but the values we obtained were lower than this, even after accounting for rounding error. Importantly, these discrepancies clearly do not undermine the conclusions drawn in the original article. 
+
+We discussed this issue with the authors and they said that it is their policy to report p values that are <.001 as p = .001. However this could be problematic, because the p values not being accurately reported, potentially introducing bias when they are used with various meta-analytic tools (e.g., p-curve)
+
+An alternative would be to use scientific notation to concisely report exact p-values. APA style recommends using p <.001, which is less informative, but is at least accurate:
+
+“When reporting p values, report exact p values (e.g., p = .031) to two or three decimal places. However, report p values less than .001 as p < .001. The tradition of reporting p values in the form p < .10, p < .05, p < .01, and so forth, was appropriate in a time when only limited tables of critical values were available.” (APA, 2009; p. 114)
 
 ```{r}
 Author_Assistance = TRUE # was author assistance provided? (if so, enter TRUE)
@@ -223,11 +231,18 @@ Insufficient_Information_Errors <- 0 # how many discrete insufficient informatio
 
 # Assess the causal locus (discrete reproducibility issues) of any reproducibility errors. Note that there doesn't necessarily have to be a one-to-one correspondance between discrete reproducibility issues and reproducibility errors. For example, it could be that the original article neglects to mention that a Greenhouse-Geisser correct was applied to ANOVA outcomes. This might result in multiple reproducibility errors, but there is a single causal locus (discrete reproducibility issue).
 
-locus_typo <- NA # how many discrete issues did you encounter that related to typographical errors?
-locus_specification <- NA # how many discrete issues did you encounter that related to incomplete, incorrect, or unclear specification of the original analyses?
-locus_analysis <- NA # how many discrete issues did you encounter that related to errors in the authors' original analyses?
-locus_data <- NA # how many discrete issues did you encounter that related to errors in the data files shared by the authors?
-locus_unidentified <- NA # how many discrete issues were there for which you could not identify the cause
+locus_typo <- 0 # how many discrete issues did you encounter that related to typographical errors?
+locus_specification <- 0 # how many discrete issues did you encounter that related to incomplete, incorrect, or unclear specification of the original analyses?
+locus_analysis <- 1 # how many discrete issues did you encounter that related to errors in the authors' original analyses?
+locus_data <- 1 # how many discrete issues did you encounter that related to errors in the data files shared by the authors?
+locus_unidentified <- 0 # how many discrete issues were there for which you could not identify the cause
+
+# How many of the above issues were resolved through author assistance?
+locus_typo_resolved <- 0 # how many discrete issues did you encounter that related to typographical errors?
+locus_specification_resolved <- 0 # how many discrete issues did you encounter that related to incomplete, incorrect, or unclear specification of the original analyses?
+locus_analysis_resolved <- 0 # how many discrete issues did you encounter that related to errors in the authors' original analyses?
+locus_data_resolved <- 1 # how many discrete issues did you encounter that related to errors in the data files shared by the authors?
+locus_unidentified_resolved <- 0 # how many discrete issues were there for which you could not identify the cause
 
 Affects_Conclusion <- FALSE # Do any reproducibility issues encounter appear to affect the conclusions made in the original article? This is a subjective judgement, but you should taking into account multiple factors, such as the presence/absence of decision errors, the number of target outcomes that could not be reproduced, the type of outcomes that could or could not be reproduced, the difference in magnitude of effect sizes, and the predictions of the specific hypothesis under scrutiny.
 ```
@@ -253,7 +268,7 @@ if(any(reportObject$comparisonOutcome != "MATCH") | Insufficient_Information_Err
 }
 
 # collate report extra details
-reportExtras <- data.frame(articleID, pilotNames, copilotNames, pilotTTC, copilotTTC, pilotStartDate, copilotStartDate, completionDate, Author_Assistance, finalOutcome, Insufficient_Information_Errors, locus_typo, locus_specification, locus_analysis, locus_data, locus_unidentified)
+reportExtras <- data.frame(articleID, pilotNames, copilotNames, pilotTTC, copilotTTC, pilotStartDate, copilotStartDate, completionDate, Author_Assistance, finalOutcome, Insufficient_Information_Errors, locus_typo, locus_specification, locus_analysis, locus_data, locus_unidentified, locus_typo_resolved, locus_specification_resolved, locus_analysis_resolved, locus_data_resolved, locus_unidentified_resolved)
 
 # save report objects
 if(reportType == "pilot"){
