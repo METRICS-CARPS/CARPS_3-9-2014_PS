@@ -1,2 +1,2 @@
 articleID,pilotNames,copilotNames,pilotTTC,copilotTTC,pilotStartDate,copilotStartDate,completionDate,Author_Assistance,finalOutcome,Insufficient_Information_Errors,locus_typo,locus_specification,locus_analysis,locus_data,locus_unidentified
-3-9-2014_PS,"Katherine Hermann, Benjamin deMayo",Emily Hembacher,240,180,2017-11-04,2018-06-13,NA,FALSE,Failure without author assistance,0,NA,NA,NA,NA,NA
+3-9-2014_PS,"Katherine Hermann, Benjamin deMayo",Emily Hembacher,240,180,2017-11-04,2018-06-13,NA,TRUE,Failure despite author assistance,0,NA,NA,NA,NA,NA

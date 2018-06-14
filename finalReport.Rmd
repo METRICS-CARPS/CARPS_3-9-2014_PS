@@ -58,8 +58,14 @@ reportObject <- data.frame(dummyRow = TRUE, reportedValue = NA, obtainedValue = 
 
 ## Step 2: Load data
 
+The data posted on OSF had two typos in the "participant" column, which apparently were not present in the data used to conduct analyses for the paper. Due to these typos, it appeared that 2 participants were missing data for one of the levels of the comparison variable, and were thus dropped from the ANOVA and t-tests that we originally conducted. Once we fixed this problem, the degrees of freedom reported in the paper matched our analyses. 
+
 ```{r}
-data_path <- 'data/DeLaFuenteEtAl_2014_RawData.xls'
+#data_path <- 'data/DeLaFuenteEtAl_2014_RawData.xls'
+
+data_path <- 'data/DeLaFuenteEtAl_2014_RawData-OSF-corrected_EHedit.xls' 
+#note that I had to add an extra correction to the corrected file the authors sent- they fixed one of the typos they described in the email but not the other
+
 d <- read_excel(data_path, sheet=3)
 ```
 
@@ -166,8 +172,6 @@ reportObject <- reproCheck(reportedValue = ".001", obtainedValue = p_group_subsc
 reportObject <- reproCheck(reportedValue = ".20", obtainedValue = pes_group_subscale, valueType = 'pes') # partial eta-squared
 ```
 
-The degrees of freedom are off by 2. Two participants (25 and 65) are being excluded from our analysis because they have missing data for the PAST condition.
-
 > Moroccans showed greater agreement with past-focused statements than Spaniards did, t(78) = 4.04, p = .001, 
 
 ```{r}
@@ -208,12 +212,12 @@ reportObject <- reproCheck(reportedValue = ".001", obtainedValue = p_ttest_futur
 
 We could not reproduce some reported values.
 
-For the ANOVA, we noted that two participants (25 and 65) had missing data for the PAST condition. There is no mention of missing data or participant exclusions in the article. The degrees of freedom reported in the paper appear to reflect that the participants *were* included in this analysis - but that should not be possible because of the missing data. There is a similar degrees of freedom for the t-test comparing PAST conditions.
+On the first pass, for the ANOVA, we noted that two participants (participant 25 for both the Moroccan and Spaniard samples) had missing data for the PAST condition. The degrees of freedom reported in the paper appeared to reflect that the participants *were* included in this analysis. When we followed up with the authors, they clarified that there were typos in the data file they had posted on OSF. The wrong participant ID had been added for some lines of data, making it appear that two participants were missing data. Once we corrected the typo, the degrees of freedom in our analyses matched those in the paper. 
 
-There were two major errors with p-values where the authors reported that p = .001 but perhaps meant to report that p < .001.
+There were two major errors with p-values where the authors reported that p = .001, but the true rounded values of p were 0.00. The authors noted that it is their policy to round up to p = .001 when p values are less than .001. 
 
 ```{r}
-Author_Assistance = FALSE # was author assistance provided? (if so, enter TRUE)
+Author_Assistance = TRUE # was author assistance provided? (if so, enter TRUE)
 
 Insufficient_Information_Errors <- 0 # how many discrete insufficient information issues did you encounter?
 
